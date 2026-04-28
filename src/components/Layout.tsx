@@ -132,7 +132,7 @@ export function Layout() {
 
         {/* Page content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 pb-28">
+          <div className="p-3 pb-20 overflow-x-hidden">
             <Outlet />
           </div>
         </main>

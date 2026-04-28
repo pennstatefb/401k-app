@@ -1,148 +1,92 @@
 import { useFinancials } from '../context/FinancialContext';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
-import { ArrowRight, Lightbulb } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ArrowRight, TrendingUp, Lightbulb } from 'lucide-react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+function fmt(value: number) {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}k`;
+  return `$${value.toFixed(0)}`;
+}
 
 export function Dashboard() {
   const { state, derived } = useFinancials();
   const { totalPortfolio, totalTraditional, totalRoth, totalTaxable, projectedPortfolioAtRetirement, savingsGap } = derived;
 
-  // 1. Portfolio Split
   const portfolioData = [
-    { name: 'Traditional (Pre-Tax)', value: totalTraditional },
-    { name: 'Roth (Tax-Free)', value: totalRoth },
-    { name: 'Taxable (Brokerage)', value: totalTaxable },
+    { name: 'Pre-Tax', value: totalTraditional },
+    { name: 'Roth', value: totalRoth },
+    { name: 'Taxable', value: totalTaxable },
   ].filter(d => d.value > 0);
 
-  // 2. Projected Balance using user's expected return setting
-  const projectedData = [
-    { name: 'Today', balance: totalPortfolio },
-    { name: 'At Retirement', balance: Math.round(projectedPortfolioAtRetirement) },
-  ];
-
-  // 3. Action Items Logic
-  const actionItems = [];
-  if (savingsGap > 0) {
-    actionItems.push("You have a savings gap. Maximize your catch-up contributions this year.");
-  }
-  if (totalTraditional > totalRoth * 3) {
-    actionItems.push("Your portfolio is heavily pre-tax. Explore the Roth Conversion Ladder to minimize future RMD taxes.");
-  }
-  if (state.targetRetirementAge < 65) {
-    actionItems.push("Review healthcare gap strategies if you plan to retire before Medicare eligibility at 65.");
-  }
-  if (actionItems.length === 0) {
-    actionItems.push("Stay the course! Review your asset allocation to ensure it aligns with your timeline.");
-  }
+  const actionItems: string[] = [];
+  if (savingsGap > 0) actionItems.push("Savings gap detected — maximize catch-up contributions.");
+  if (totalTraditional > totalRoth * 3) actionItems.push("Portfolio is heavily pre-tax. Consider Roth conversions to reduce future RMDs.");
+  if (state.targetRetirementAge < 65) actionItems.push("Retiring before 65 — review healthcare gap before Medicare kicks in.");
+  if (actionItems.length === 0) actionItems.push("On track! Review your asset allocation to stay aligned with your timeline.");
 
   return (
-    <div className="space-y-6">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 leading-tight">Your 7-Year Runway</h1>
-        <p className="text-gray-500 mt-2">At-a-glance summary of your retirement trajectory.</p>
-      </header>
+    <div className="space-y-3">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Portfolio Split Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Tax Buckets (Portfolio Split)</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={portfolioData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {portfolioData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: any) => `$${Number(value).toLocaleString()}`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+      {/* Projected Balance */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-1.5 mb-3">
+          <TrendingUp className="w-4 h-4 text-indigo-500" />
+          <span className="text-sm font-semibold text-gray-700">Projected Balance</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
+            <div className="text-xs text-gray-400 mb-0.5">Today</div>
+            <div className="text-xl font-bold text-gray-800">{fmt(totalPortfolio)}</div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-indigo-400 shrink-0" />
+          <div className="flex-1 bg-indigo-50 rounded-xl p-3 text-center border border-indigo-100">
+            <div className="text-xs text-indigo-400 mb-0.5">At Retirement</div>
+            <div className="text-xl font-bold text-indigo-700">{fmt(projectedPortfolioAtRetirement)}</div>
           </div>
         </div>
-
-        {/* Projected Growth */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Projected Balance at Retirement</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={projectedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
-                <Tooltip formatter={(value: any) => `$${Number(value).toLocaleString()}`} />
-                <Bar dataKey="balance" fill="#4F46E5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {projectedPortfolioAtRetirement > totalPortfolio && (
+          <div className="mt-2 text-center text-xs text-green-600 font-medium">
+            +{fmt(projectedPortfolioAtRetirement - totalPortfolio)} projected growth · {(state.expectedReturn * 100).toFixed(0)}% return
           </div>
-          <p className="text-xs text-gray-400 mt-2 text-center">*Assumes {(state.expectedReturn * 100).toFixed(0)}% annual return — adjust in Snapshot</p>
+        )}
+      </div>
+
+      {/* Portfolio Split */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="text-sm font-semibold text-gray-700 mb-2">Tax Buckets</div>
+        <div className="h-48 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={portfolioData} cx="50%" cy="45%" innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value">
+                {portfolioData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip formatter={(v: any) => `$${Number(v).toLocaleString()}`} />
+              <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       {/* Action Items */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-100 bg-blue-50/30">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Lightbulb className="w-5 h-5 text-blue-600" />
-          Biggest Moves You Can Make Right Now
-        </h2>
-        <ul className="space-y-3">
+      <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Lightbulb className="w-4 h-4 text-blue-600" />
+          <span className="text-sm font-semibold text-gray-700">Top Moves Right Now</span>
+        </div>
+        <ul className="space-y-2">
           {actionItems.slice(0, 3).map((item, idx) => (
-            <li key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-100">
-              <div className="mt-0.5 bg-blue-100 text-blue-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold shrink-0">
+            <li key={idx} className="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-gray-100">
+              <div className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                 {idx + 1}
               </div>
-              <p className="text-gray-700">{item}</p>
+              <p className="text-xs text-gray-700 leading-snug">{item}</p>
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link to="/roth-conversion" className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-blue-300 transition-colors flex justify-between items-center">
-          <div>
-            <div className="font-semibold text-gray-800">Roth Conversion Ladder</div>
-            <div className="text-xs text-gray-500 mt-1">Plan your tax-efficient moves</div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-        </Link>
-        <Link to="/social-security" className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-blue-300 transition-colors flex justify-between items-center">
-          <div>
-            <div className="font-semibold text-gray-800">Social Security Optimizer</div>
-            <div className="text-xs text-gray-500 mt-1">Find your breakeven age</div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-        </Link>
-        <Link to="/withdrawal" className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-blue-300 transition-colors flex justify-between items-center">
-          <div>
-            <div className="font-semibold text-gray-800">Withdrawal Strategy</div>
-            <div className="text-xs text-gray-500 mt-1">Map out your income plan</div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-        </Link>
-      </div>
     </div>
   );
 }
