@@ -67,11 +67,34 @@ export function Snapshot() {
           <span className="text-xs text-gray-600">Include Spouse</span>
         </label>
         {state.hasSpouse && (
-          <div className="mt-2 w-1/2 pr-1">
-            <label className={labelCls}>Spouse Age</label>
-            <NumberInput value={state.spouseAge}
-              onChange={(v) => updateState({ spouseAge: v })}
-              className={inputCls} />
+          <div className="mt-2 space-y-2">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Spouse Info</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className={labelCls}>Spouse Age</label>
+                <NumberInput value={state.spouseAge}
+                  onChange={(v) => updateState({ spouseAge: v })}
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Spouse SS Start Age</label>
+                <NumberInput value={state.spouseSsStartAge}
+                  onChange={(v) => updateState({ spouseSsStartAge: v })}
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Spouse Monthly SS</label>
+                <NumberInput value={state.spouseSocialSecurity}
+                  onChange={(v) => updateState({ spouseSocialSecurity: v })}
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Spouse Pension</label>
+                <NumberInput value={state.spousePension}
+                  onChange={(v) => updateState({ spousePension: v })}
+                  className={inputCls} />
+              </div>
+            </div>
           </div>
         )}
       </div>
