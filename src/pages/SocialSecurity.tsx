@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFinancials } from '../context/FinancialContext';
+import { NumberInput } from '../components/NumberInput';
 import {
   LineChart,
   Line,
@@ -59,12 +60,11 @@ export function SocialSecurity() {
         </div>
         <div className="flex items-center">
           <span className="text-xl text-gray-500 mr-2">$</span>
-          <input
-            type="number"
+          <NumberInput
             value={pia}
-            onChange={(e) => {
-              setPia(Number(e.target.value));
-              updateState({ userSocialSecurity: Number(e.target.value) });
+            onChange={(v) => {
+              setPia(v);
+              updateState({ userSocialSecurity: v });
             }}
             className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-xl font-semibold"
           />
@@ -97,7 +97,7 @@ export function SocialSecurity() {
               <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="age" />
-                <YAxis tickFormatter={(val) => `$${val/1000}k`} />
+                <YAxis tickFormatter={(val) => val >= 1_000_000 ? `$${(val/1_000_000).toFixed(1)}M` : `$${(val/1000).toFixed(0)}k`} width={55} />
                 <Tooltip formatter={(value: any) => `$${Number(value).toLocaleString()}`} />
                 <Legend />
                 <Line type="monotone" dataKey="claim62" name="Claim at 62" stroke="#ef4444" strokeWidth={2} dot={false} />
